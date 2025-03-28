@@ -142,7 +142,8 @@ xfactor <- function(x, levels = NULL, labels = NULL, exclude = FALSE, reorder = 
   } else if (is.function(reorder)) {
     x <- forcats::fct_relevel(x, reorder)
   } else if (is.character(reorder) & substr(reorder, 1, 3) == "fct") {
-      eval(parse(text = paste0("forcats::", reorder, "(x)")))
+    # Need to drop empty levels for fct_inorder to work
+      eval(parse(text = paste0("forcats::", reorder, "(forcats::fct_drop(x))"))) 
   }
    
 return(x)
@@ -160,7 +161,7 @@ return(x)
 #' @return
 #' @export
 #'
-check_patterns <- function(f, patterns, ...) {
+check_patterns <- function(f, patterns, replacement, ...) {
   
   levels <- levels(f)
   
@@ -178,7 +179,7 @@ check_patterns <- function(f, patterns, ...) {
     level_id    = match_rows, 
     level_old   = levels[match_rows],
     pattern_id  = match_cols,
-    pattern     = patterns[match_cols],
+    pattern     = unname(patterns[match_cols]),
     duplicates  = match_dups,
     stringsAsFactors = FALSE)
   
@@ -187,3 +188,31 @@ check_patterns <- function(f, patterns, ...) {
 }
 
 
+# Function to replace levels with regex matching
+# make_levels <- function(.f, patterns, replacement = NULL, ignore.case = FALSE) {
+#   
+#   lvls <- levels(.f)
+#   
+#   # # Replacements can be listed in the replacement argument, taken as names in patterns, or the patterns themselves.
+#   # if(is.null(replacement)) {
+#   #   if(is.null(names(patterns)))
+#   #     replacement <- patterns
+#   #   else
+#   #     replacement <- names(patterns)
+#   # }
+#   # 
+#   # Find matching levels
+#   lvl_match <- setNames(vector("list", length = length(patterns)), replacement)
+#   for(i in seq_along(patterns))
+#     lvl_match[[replacement[i]]] <- grep(patterns[i], lvls, ignore.case = ignore.case, value = TRUE)
+#   
+#   # Append other non-matching levels
+#   lvl_other <- setdiff(lvls, unlist(lvl_match))
+#   lvl_all <- append(
+#     lvl_match, 
+#     setNames(as.list(lvl_other), lvl_other)
+#   )
+#   
+#   return(lvl_all)
+#   
+# }
